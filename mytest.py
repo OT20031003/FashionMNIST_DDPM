@@ -31,7 +31,7 @@ def InferTest(args):
     # Training関数で保存されるファイル名 'model_weight.pth' を指定
     # map_location=device を使うことで、GPUがない環境でもGPUで学習したモデルを読み込める
     try:
-        model.load_state_dict(torch.load('smallmodel_weight_CIFAR.pth', map_location=device))
+        model.load_state_dict(torch.load('./smallmodel_weight.pth', map_location=device))
     except FileNotFoundError:
         print("Error: 'model_weight.pth' not found.")
         print("Please train the model first by uncommenting and running the Training() function in main().")
@@ -87,4 +87,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-# python mytest.py --channel_num 3 --img_size 32 --batch_size 1
+# python mytest.py --channel_num 1 --img_size 32 --batch_size 1

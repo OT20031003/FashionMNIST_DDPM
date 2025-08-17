@@ -3,7 +3,6 @@ import torch
 from torchvision import transforms
 from PIL import Image
 from embedingver import ResNet, Downsample, Upsample, SinusoidalPositionEmbeddings, SmallUNet
-from mnist_unet import MnistUNet
 from FashionUNet import FashionUNet
 def make_beta_schedule(timesteps, start_beta, end_beta):
     a = (end_beta - start_beta ) /timesteps
@@ -50,10 +49,10 @@ def save_tensor_as_image(tensor: torch.Tensor, save_path: str):
 class GaussianDiffusion(Module):
     def __init__(
             self, 
-            timesteps = 1000, 
+            timesteps = 500, 
             start_beta = 0.0001,
             end_beta = 0.02, 
-            channel_size = 3
+            channel_size = 1
     ):
         super().__init__()
         self.beta_schedules = make_beta_schedule(timesteps, start_beta, end_beta)
