@@ -1,20 +1,7 @@
 import torch.nn as nn
 import torch
-# from embedingver import SinusoidalPositionEmbeddings 
-# 上記は未提供のため、仮のクラスを定義します
-class SinusoidalPositionEmbeddings(nn.Module):
-    def __init__(self, dim):
-        super().__init__()
-        self.dim = dim
+from embedingver import SinusoidalPositionEmbeddings 
 
-    def forward(self, time):
-        device = time.device
-        half_dim = self.dim // 2
-        embeddings = torch.log(torch.tensor(10000.0, device=device)) / (half_dim - 1)
-        embeddings = torch.exp(torch.arange(half_dim, device=device) * -embeddings)
-        embeddings = time[:, None] * embeddings[None, :]
-        embeddings = torch.cat((embeddings.sin(), embeddings.cos()), dim=-1)
-        return embeddings
 
 class Block(nn.Module):
     def __init__(self, shape, in_c, out_c, kernel_size=3, stride=1, padding=1, activation=None, normalize=True):
