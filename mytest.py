@@ -53,7 +53,7 @@ def InferTest(args):
     img = torch.randn((batch_size, channels, image_size, image_size), device=device)
     # img =  load_image_as_tensor("./a.png").unsqueeze(0).to(device)
     # img = 2*img - 1
-    SmallDDPM.save_tensor_as_image(img.squeeze(0), "rand.png")
+    SmallDDPM.save_batch_tensor_as_image(img, "rand.png")
     # 勾配計算は不要なため、torch.no_grad()コンテキストで実行
     with torch.no_grad():
         # model.timesteps - 1 から 0 までループ
@@ -71,7 +71,7 @@ def InferTest(args):
 
     #generated_image = (img2.clamp(-1, 1) + 1) / 2
     
-    SmallDDPM.save_tensor_as_image(img2.squeeze(0).cpu(), "generated_image.png")
+    SmallDDPM.save_batch_tensor_as_image(img2.cpu(), "generated_image.png")
 
 
 

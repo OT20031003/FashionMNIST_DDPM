@@ -23,7 +23,7 @@ def FASHIONtraining(args, model, optimizer):
     batch_size = args.batch_size
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
     print(f"train dataset size = {len(train_dataset)}")
-    num_epoch = 2
+    num_epoch = 100
     criterion = torch.nn.MSELoss()
 
     for epoch in range(num_epoch):
@@ -91,7 +91,7 @@ def Training(args, model, optimizer):
 
 def Training_test(args):
     model = SmallDDPM.GaussianDiffusion(channel_size=args.channel_num)
-    optimizer = torch.optim.Adam(model.parameters(), lr = 1e-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr = 5e-5)
     FASHIONtraining(args, model, optimizer)
 
 

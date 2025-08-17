@@ -4,6 +4,8 @@ from torchvision import transforms
 from PIL import Image
 from embedingver import ResNet, Downsample, Upsample, SinusoidalPositionEmbeddings, SmallUNet
 from FashionUNet import FashionUNet
+from torchvision.utils import make_grid, save_image
+from typing import Union, List
 def make_beta_schedule(timesteps, start_beta, end_beta):
     a = (end_beta - start_beta ) /timesteps
     #y = a * time + start_beta
@@ -45,6 +47,33 @@ def save_tensor_as_image(tensor: torch.Tensor, save_path: str):
         print(f"An error occurred while saving the image: {e}")
 
 
+
+def save_batch_tensor_as_image(tensor: torch.Tensor, save_path: str, nrow: int = 5):
+    """
+    バッチ処理された画像テンソルをタイル状に並べた1枚の画像として保存する関数。
+
+    Args:
+        tensor (torch.Tensor): 保存する画像テンソル。[B, C, H, W]の形状を期待。
+        save_path (str): 画像の保存先パス。
+        nrow (int, optional): グリッドの各行に表示する画像数。デフォルトは8。
+    """
+    try:
+        # テンソルが4次元でない場合はエラーを出す
+        if tensor.dim() != 4:
+            raise ValueError(f"Expected a 4D tensor (B, C, H, W), but got {tensor.dim()} dimensions.")
+            
+        # [-1, 1]の範囲のテンソルを[0, 1]に正規化する
+        # save_imageまたはmake_gridのnormalize=Trueでも可能ですが、
+        # 明示的に行う場合は以下のコメントアウトを解除します。
+        # tensor = (tensor + 1) / 2
+
+        # save_image関数は内部でmake_gridを呼び出し、正規化から保存まで一括で行ってくれる
+        # normalize=Trueは、画像の範囲を自動的に[0, 1]にスケーリングするオプション
+        save_image(tensor, save_path, nrow=nrow, normalize=True)
+        
+        print(f"Image successfully saved to {save_path}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 class GaussianDiffusion(Module):
     def __init__(
@@ -96,15 +125,15 @@ class GaussianDiffusion(Module):
         epsilon_theta = self.unet.forward(img, timestep)
         
         # 各種パラメータを取得
-        alpha_t = self.alphas[timestep]
-        alpha_bar_t = self.alpha_bars[timestep]
-        beta_t = self.betas[timestep]
+        alpha_t = self.alphas[timestep].view(-1, 1, 1, 1)
+        alpha_bar_t = self.alpha_bars[timestep].view(-1, 1, 1, 1)
+        beta_t = self.betas[timestep].view(-1, 1, 1, 1)
         
         # ノイズを生成
         z = torch.randn_like(img)
         
         # 最後のステップ (t=0) ではノイズを加えない
-        if timestep.item() == 0:
+        if timestep[0].item() == 0:
             z = torch.zeros_like(img)
         z = z.clip(-1.0, 1.0)    
         sigma_t = torch.sqrt(beta_t)
@@ -120,7 +149,7 @@ class GaussianDiffusion(Module):
         """ timestepから0になるまで逆拡散を繰り返す """
         
         # 正しい型チェック (isinstanceを使用)
-        save_tensor_as_image(img.squeeze(0), "./result/ongo_start.png")
+        save_batch_tensor_as_image(img, "./result/ongo_start.png")
         if not isinstance(timestep, torch.Tensor):
             print(f"エラー: timestepはTensorである必要がありますが、{type(timestep)}が渡されました。")
             raise TypeError("timestep must be a torch.Tensor")
@@ -132,7 +161,8 @@ class GaussianDiffusion(Module):
         # Python 3のrangeでは逆順のループは range(start, stop, step) を使う
         for current_t in range(ts-1, -1, -1):
             # 現在のタイムステップをTensorに変換して渡す
-            current_t_tensor = torch.tensor([current_t], device=img.device)
+            
+            current_t_tensor = torch.full((img.shape[0],), current_t, device=img.device, dtype=torch.long)
             img = self.reverse_onestep(img, current_t_tensor)
             if current_t %50==0:
                 print(f"current_t = {current_t}")
@@ -141,6 +171,6 @@ class GaussianDiffusion(Module):
                 if torch.isinf(img).any():
                     print("Inf detected in generated image!")
                 
-                save_tensor_as_image(img.squeeze(0), "./result/ongo" + str(current_t)+".png")
+                save_batch_tensor_as_image(img, "./result/ongo" + str(current_t)+".png")
             
         return img
